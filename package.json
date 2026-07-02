@@ -1,0 +1,20 @@
+{
+  "name": "autonomous-arbitrage-agent",
+  "version": "0.1.0",
+  "description": "Autonomous Yield & Liquidity Arbitrage Agent for Unicity Testnet v2 — Builder Program",
+  "main": "dist/agent.js",
+  "scripts": {
+    "build": "npx tsc",
+    "start": "node dist/agent.js",
+    "dev": "npx tsc && node dist/agent.js"
+  },
+  "author": "Unicity Builder",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.2",
+    "@types/node": "^20.11.0"
+  }
+}
