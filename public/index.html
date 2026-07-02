@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous Arbitrage Agent | Unicity Testnet v2</title>
+  <meta name="description" content="Zero-human-in-the-loop autonomous yield and liquidity arbitrage agent for Unicity Testnet v2 Builder Program">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a2e;
+      --bg-card-hover: #1f1f35;
+      --text-primary: #e8e8ed;
+      --text-secondary: #8b8b9e;
+      --text-muted: #5a5a6e;
+      --accent-blue: #6366f1;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #a855f7;
+      --gradient-primary: linear-gradient(135deg, #6366f1, #06b6d4);
+      --gradient-glow: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(6,182,212,0.15));
+      --border: rgba(255,255,255,0.06);
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --radius: 16px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 50%, rgba(99,102,241,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(168,85,247,0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-grid::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 4rem 0 3rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+      background: var(--gradient-glow);
+      border: 1px solid rgba(99,102,241,0.3);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--accent-blue);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 650px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .stat-card:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card:hover::before { opacity: 1; }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .stat-value.blue { color: var(--accent-blue); }
+    .stat-value.green { color: var(--accent-green); }
+    .stat-value.cyan { color: var(--accent-cyan); }
+    .stat-value.amber { color: var(--accent-amber); }
+
+    /* Architecture section */
+    .section { margin-bottom: 3rem; }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--gradient-glow);
+      border: 1px solid rgba(99,102,241,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    /* Module cards */
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .module-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .module-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(99,102,241,0.3);
+    }
+
+    .module-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      margin-bottom: 0.5rem;
+    }
+
+    .module-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Live feed */
+    .feed {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.8;
+    }
+
+    .feed::-webkit-scrollbar { width: 6px; }
+    .feed::-webkit-scrollbar-track { background: transparent; }
+    .feed::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    .feed-line {
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .feed-time { color: var(--text-muted); }
+    .feed-info { color: var(--accent-blue); }
+    .feed-success { color: var(--accent-green); }
+    .feed-warn { color: var(--accent-amber); }
+    .feed-error { color: var(--accent-red); }
+
+    /* Flow diagram */
+    .flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 2rem 0;
+    }
+
+    .flow-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .flow-step:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-card-hover);
+    }
+
+    .flow-arrow {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+    }
+
+    /* CTA */
+    .cta-section {
+      text-align: center;
+      padding: 3rem 0;
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 2rem;
+      border-radius: var(--radius-sm);
+      background: var(--gradient-primary);
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      margin: 0.5rem;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+    }
+
+    .cta-btn.outline {
+      background: transparent;
+      border: 1px solid rgba(99,102,241,0.4);
+      color: var(--accent-blue);
+    }
+
+    .cta-btn.outline:hover {
+      background: var(--gradient-glow);
+      box-shadow: 0 8px 24px rgba(99,102,241,0.2);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 640px) {
+      .container { padding: 1rem; }
+      header { padding: 2rem 0 1.5rem; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <div class="container">
+    <header>
+      <div class="badge">Unicity Testnet v2 • Autonomous Agents Track</div>
+      <h1>Autonomous Arbitrage Agent</h1>
+      <p class="subtitle">
+        A zero-human-in-the-loop AI agent that autonomously manages a treasury,
+        scans intent markets &amp; DEX pools, identifies yield opportunities and
+        price arbitrage, and executes atomic swaps at machine speed.
+      </p>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Opportunities Scanned</div>
+        <div class="stat-value blue" id="scanned">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Successful Swaps</div>
+        <div class="stat-value green" id="swaps">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Yield Deposits</div>
+        <div class="stat-value cyan" id="yields">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Volume</div>
+        <div class="stat-value amber" id="volume">0.00</div>
+      </div>
+    </div>
+
+    <!-- Agent Flow -->
+    <div class="section">
+      <div class="section-title">
+        <div class="icon">⚡</div>
+        Agent Execution Flow
+      </div>
+      <div class="flow">
+        <div class="flow-step">🔑 Identity Init</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">🔍 Market Scan</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">📊 Opportunity Detection</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">📤 P2P Negotiation</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">🔒 Escrow Creation</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">💱 Atomic Swap</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">✅ Settlement</div>
+      </div>
+    </div>
+
+    <!-- Live Feed -->
+    <div class="section">
+      <div class="section-title">
+        <div class="icon">📡</div>
+        Live Agent Feed (Simulation)
+      </div>
+      <div class="feed" id="feed"></div>
+    </div>
+
+    <!-- Modules -->
+    <div class="section">
+      <div class="section-title">
+        <div class="icon">🧩</div>
+        Architecture Modules
+      </div>
+      <div class="modules-grid">
+        <div class="module-card">
+          <div class="module-name">src/sdk/index.ts</div>
+          <div class="module-desc">Local Sphere SDK mock — in-memory ledger, wallet, escrow, atomic swap, and yield primitives</div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">src/identity.ts</div>
+          <div class="module-desc">Wallet creation, Nametag registration on Sphere, and automatic faucet funding</div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">src/marketScanner.ts</div>
+          <div class="module-desc">Continuous polling of Intent Markets and DEX pools with configurable intervals</div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">src/negotiator.ts</div>
+          <div class="module-desc">P2P proposal/accept/reject flow via Nostr-style encrypted messaging</div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">src/executor.ts</div>
+          <div class="module-desc">Escrow-based atomic swap execution and yield deposits with retry logic</div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">src/agent.ts</div>
+          <div class="module-desc">Main orchestrator — autonomous loop with stats reporting and graceful error handling</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <a href="https://github.com/tuannguyenvan95/autonomous-arbitrage-agent" class="cta-btn" target="_blank">
+        ⭐ View on GitHub
+      </a>
+      <a href="https://github.com/tuannguyenvan95/autonomous-arbitrage-agent#-quick-start" class="cta-btn outline" target="_blank">
+        📖 Documentation
+      </a>
+    </div>
+
+    <footer>
+      <p>Built for Unicity Builder Program — Autonomous Agents Track</p>
+      <p style="margin-top:0.5rem;">MIT License © 2026</p>
+    </footer>
+  </div>
+
+  <script>
+    // Simulated live feed
+    const tokens = ['UTEST', 'ALPHA', 'BETA'];
+    const actions = [
+      { icon: '🔍', msg: (t1, t2) => `Scanning intent market… ${Math.floor(Math.random()*5+1)} open intents found`, cls: 'feed-info' },
+      { icon: '⚡', msg: (t1, t2) => `ARBITRAGE detected: ${t1} → ${t2} | spread ${(Math.random()*15+0.5).toFixed(2)}%`, cls: 'feed-warn' },
+      { icon: '🌾', msg: (t1) => `YIELD detected: ${t1} | APY ${(Math.random()*5+0.1).toFixed(2)}%`, cls: 'feed-info' },
+      { icon: '📤', msg: (t1, t2) => `Proposal sent to ${Math.random().toString(36).slice(2,14)}…`, cls: 'feed-info' },
+      { icon: '✅', msg: (t1, t2) => `Counterparty accepted — executing atomic swap`, cls: 'feed-success' },
+      { icon: '💱', msg: (t1, t2) => `Swap executed: ${(Math.random()*200+10).toFixed(2)} ${t1} → ${t2} | tx ${Math.random().toString(36).slice(2,18)}`, cls: 'feed-success' },
+      { icon: '🔒', msg: () => `Escrow created: escrow-${Math.random().toString(36).slice(2,18)}`, cls: 'feed-info' },
+      { icon: '❌', msg: () => `Counterparty rejected proposal — moving on`, cls: 'feed-error' },
+      { icon: '🌾', msg: (t1) => `Yield deposited: ${(Math.random()*1000+100).toFixed(2)} ${t1} into pool | APY ${(Math.random()*5).toFixed(2)}%`, cls: 'feed-success' },
+    ];
+
+    const feed = document.getElementById('feed');
+    let scanned = 0, swaps = 0, yields = 0, volume = 0;
+
+    function addLine() {
+      const t1 = tokens[Math.floor(Math.random() * tokens.length)];
+      const t2 = tokens.filter(t => t !== t1)[Math.floor(Math.random() * 2)];
+      const action = actions[Math.floor(Math.random() * actions.length)];
+      const time = new Date().toISOString().slice(11, 23);
+
+      const line = document.createElement('div');
+      line.className = 'feed-line';
+      line.innerHTML = `<span class="feed-time">${time}</span> <span class="${action.cls}">${action.icon} ${action.msg(t1, t2)}</span>`;
+      feed.appendChild(line);
+      feed.scrollTop = feed.scrollHeight;
+
+      // Update stats
+      scanned++;
+      if (action.icon === '💱') { swaps++; volume += Math.random() * 200 + 10; }
+      if (action.icon === '🌾' && action.msg.toString().includes('deposited')) { yields++; volume += Math.random() * 500; }
+
+      document.getElementById('scanned').textContent = scanned;
+      document.getElementById('swaps').textContent = swaps;
+      document.getElementById('yields').textContent = yields;
+      document.getElementById('volume').textContent = volume.toFixed(2);
+
+      // Keep max 100 lines
+      while (feed.children.length > 100) feed.removeChild(feed.firstChild);
+    }
+
+    // Start feed
+    setInterval(addLine, 1200 + Math.random() * 800);
+    // Initial burst
+    for (let i = 0; i < 5; i++) setTimeout(addLine, i * 300);
+  </script>
+</body>
+</html>
