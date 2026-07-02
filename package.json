@@ -11,10 +11,9 @@
   "author": "Unicity Builder",
   "license": "MIT",
   "dependencies": {
-    "dotenv": "^16.0.0"
-  },
-  "devDependencies": {
+    "dotenv": "^16.0.0",
     "typescript": "^5.4.2",
     "@types/node": "^20.11.0"
-  }
+  },
+  "devDependencies": {}
 }
