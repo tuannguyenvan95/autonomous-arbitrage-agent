@@ -5,6 +5,7 @@
   "main": "dist/agent.js",
   "scripts": {
     "build": "npx tsc",
+    "vercel-build": "echo 'Skipping backend build for Vercel'",
     "start": "node dist/agent.js",
     "dev": "npx tsc && node dist/agent.js"
   },
